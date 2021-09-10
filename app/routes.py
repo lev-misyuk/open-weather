@@ -69,3 +69,14 @@ def create_item():
             db.session.refresh(item)
             db.session.commit()
             return jsonify({'message': 'Item has been created', 'item_id': item.id, 'item_name': item.name, 'item_owner': item.owner_login})
+
+@app.route('/items/<id>', methods=['DELETE'])
+@jwt_required()
+def delete_item(id):
+    current_user = get_jwt_identity()
+    item = Item.query.filter_by(id=id, owner_login=current_user).first()
+    if item:
+        db.session.delete(item)
+        db.session.commit()
+        return jsonify({'message': f'Item with id {id} has been deleted'})
+    return jsonify({'message': 'Item not found'}), 404
