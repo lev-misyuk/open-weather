@@ -1,5 +1,4 @@
 from datetime import datetime
-from os import access
 from app import app, db
 from app.models import User, Item
 from flask import request, jsonify
@@ -68,7 +67,7 @@ def create_item():
             db.session.flush()
             db.session.refresh(item)
             db.session.commit()
-            return jsonify({'message': 'Item has been created', 'item_id': item.id, 'item_name': item.name, 'item_owner': item.owner_login})
+            return jsonify({'message': 'Item has been created', 'item_id': item.id, 'item_name': item.name})
 
 @app.route('/items/<id>', methods=['DELETE'])
 @jwt_required()
@@ -80,3 +79,10 @@ def delete_item(id):
         db.session.commit()
         return jsonify({'message': f'Item with id {id} has been deleted'})
     return jsonify({'message': 'Item not found'}), 404
+
+@app.route('/items', methods=['GET'])
+@jwt_required()
+def get_items():
+    current_user = get_jwt_identity()
+    items = Item.query.filter_by(owner_login=current_user).all()
+    return jsonify([{'item_id': item.id, 'item_name': item.name} for item in items])
