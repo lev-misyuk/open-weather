@@ -1,7 +1,8 @@
 from app import db
 
 class User(db.Model):
-    login = db.Column(db.String, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    login = db.Column(db.String, unique=True, nullable=False)
     password = db.Column(db.String(30), nullable=False)
     items = db.relationship('Item', backref='user', lazy=True)
 
@@ -9,7 +10,7 @@ class User(db.Model):
         return f'User {self.login}'
 
 class Item(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(20), nullable=False)
     owner_login = db.Column(db.String, db.ForeignKey('user.login'), nullable=False)
 
