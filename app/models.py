@@ -16,3 +16,11 @@ class Item(db.Model):
 
     def __repr__(self):
         return f'Item {self.name}'
+    
+class Link(db.Model):
+    _from = db.Column(db.String, nullable=False)
+    _to = db.Column(db.String, nullable=False)
+    _text = db.Column(db.String, primary_key=True)
+
+    def __repr__(self):
+        return f'Link {self._text} from {self._from} to {self._to}'
