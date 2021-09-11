@@ -1,6 +1,5 @@
-from datetime import datetime
 from app import app, db
-from app.models import User, Item
+from app.models import Link, User, Item
 from flask import request, jsonify
 from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required
 
@@ -86,3 +85,53 @@ def get_items():
     current_user = get_jwt_identity()
     items = Item.query.filter_by(owner_login=current_user).all()
     return jsonify([{'item_id': item.id, 'item_name': item.name} for item in items])
+
+@app.route('/send', methods=['POST'])
+@jwt_required()
+def send_item():
+    current_user = get_jwt_identity()
+    try:
+        assert 'id' in request.args and len(request.args.get('id')) > 0
+    except AssertionError:
+        return jsonify({'message': 'Invalid item id'}), 422
+    else:
+        try:
+            assert 'login' in request.args and len(request.args.get('login')) > 0
+        except AssertionError:
+            return jsonify({'message': 'Invalid login'}), 422
+        else:
+            receiver_login, id = request.args.get('login'), request.args.get('id')
+            receiver = User.query.filter_by(login=receiver_login).first()
+            if not receiver:
+                return jsonify({'message': 'User not found'}), 404
+
+            item = Item.query.filter_by(owner_login=current_user, id=id).first()
+            if not item:
+                return jsonify({'message': 'Item not found'}), 404
+
+            link = Link(_text=f'{receiver_login}/{id}', _from=current_user, _to=receiver_login)
+            db.session.add(link)
+            db.session.commit()
+            return jsonify({'link': link._text})
+
+@app.route('/get', methods=['GET'])
+@jwt_required()
+def receive_item():
+    current_user = get_jwt_identity()
+    try:
+        assert 'link' in request.args and len(request.args.get('link')) > 0
+    except AssertionError:
+        return jsonify({'message': 'Invalid link'}), 422
+    else:
+        link = request.args.get('link').split('/')
+        if link[0] != current_user:
+            return jsonify({'message': 'You are not able to receive this item'}), 401
+        
+        if not Link.query.filter_by(_text=request.args.get('link')).first():
+            return jsonify({'message': 'Link not found'}), 404
+        
+        item = Item.query.filter_by(id=link[1]).first()
+        item.owner_login = current_user
+        db.session.commit()
+        return jsonify({'message': f'Item {item.name} has been received'})
+
