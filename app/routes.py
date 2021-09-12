@@ -5,6 +5,8 @@ from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_requir
 
 @app.route('/registration', methods=['POST'])
 def register():
+    if request.method != 'POST':
+        return jsonify({'message': 'Method not allowed'}), 405
     try:
         assert 'login' in request.args and 'password' in request.args
     except AssertionError:
@@ -28,6 +30,8 @@ def register():
 
 @app.route('/login', methods=['POST'])
 def login():
+    if request.method != 'POST':
+        return jsonify({'message': 'Method not allowed'}), 405
     try:
         assert 'login' in request.args and 'password' in request.args
     except AssertionError:
@@ -49,6 +53,8 @@ def login():
 @app.route('/items/new', methods=['POST'])
 @jwt_required()
 def create_item():
+    if request.method != 'POST':
+        return jsonify({'message': 'Method not allowed'}), 405
     current_user = get_jwt_identity()
     try:
         assert 'name' in request.args
@@ -71,6 +77,8 @@ def create_item():
 @app.route('/items/<id>', methods=['DELETE'])
 @jwt_required()
 def delete_item(id):
+    if request.method != 'DELETE':
+        return jsonify({'message': 'Method not allowed'}), 405
     current_user = get_jwt_identity()
     item = Item.query.filter_by(id=id, owner_login=current_user).first()
     if item:
@@ -82,6 +90,8 @@ def delete_item(id):
 @app.route('/items', methods=['GET'])
 @jwt_required()
 def get_items():
+    if request.method != 'GET':
+        return jsonify({'message': 'Method not allowed'}), 405
     current_user = get_jwt_identity()
     items = Item.query.filter_by(owner_login=current_user).all()
     return jsonify([{'item_id': item.id, 'item_name': item.name} for item in items])
@@ -89,6 +99,8 @@ def get_items():
 @app.route('/send', methods=['POST'])
 @jwt_required()
 def send_item():
+    if request.method != 'POST':
+        return jsonify({'message': 'Method not allowed'}), 405
     current_user = get_jwt_identity()
     try:
         assert 'id' in request.args and len(request.args.get('id')) > 0
@@ -117,6 +129,8 @@ def send_item():
 @app.route('/get', methods=['GET'])
 @jwt_required()
 def receive_item():
+    if request.method != 'GET':
+        return jsonify({'message': 'Method not allowed'}), 405
     current_user = get_jwt_identity()
     try:
         assert 'link' in request.args and len(request.args.get('link')) > 0
@@ -125,7 +139,7 @@ def receive_item():
     else:
         link = request.args.get('link').split('/')
         if link[0] != current_user:
-            return jsonify({'message': 'You are not able to receive this item'}), 401
+            return jsonify({'message': 'You are not able to receive this item'}), 403
         
         if not Link.query.filter_by(_text=request.args.get('link')).first():
             return jsonify({'message': 'Link not found'}), 404
