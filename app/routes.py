@@ -1,9 +1,11 @@
-from app import app, db
+from app import db
 from app.models import Link, User, Item
-from flask import request, jsonify
+from flask import request, jsonify, Blueprint
 from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required
 
-@app.route('/registration', methods=['POST'])
+routes = Blueprint('routes', __name__)
+
+@routes.route('/registration', methods=['POST'])
 def register():
     if request.method != 'POST':
         return jsonify({'message': 'Method not allowed'}), 405
@@ -28,7 +30,7 @@ def register():
                 db.session.commit()
                 return jsonify({'message': f'User {login} has registered'})
 
-@app.route('/login', methods=['POST'])
+@routes.route('/login', methods=['POST'])
 def login():
     if request.method != 'POST':
         return jsonify({'message': 'Method not allowed'}), 405
@@ -50,7 +52,7 @@ def login():
             
             return jsonify({'message': 'Authorization failed'}), 401
 
-@app.route('/items/new', methods=['POST'])
+@routes.route('/items/new', methods=['POST'])
 @jwt_required()
 def create_item():
     if request.method != 'POST':
@@ -74,7 +76,7 @@ def create_item():
             db.session.commit()
             return jsonify({'message': 'Item has been created', 'item_id': item.id, 'item_name': item.name})
 
-@app.route('/items/<id>', methods=['DELETE'])
+@routes.route('/items/<id>', methods=['DELETE'])
 @jwt_required()
 def delete_item(id):
     if request.method != 'DELETE':
@@ -87,7 +89,7 @@ def delete_item(id):
         return jsonify({'message': f'Item with id {id} has been deleted'})
     return jsonify({'message': 'Item not found'}), 404
 
-@app.route('/items', methods=['GET'])
+@routes.route('/items', methods=['GET'])
 @jwt_required()
 def get_items():
     if request.method != 'GET':
@@ -96,7 +98,7 @@ def get_items():
     items = Item.query.filter_by(owner_login=current_user).all()
     return jsonify([{'item_id': item.id, 'item_name': item.name} for item in items])
 
-@app.route('/send', methods=['POST'])
+@routes.route('/send', methods=['POST'])
 @jwt_required()
 def send_item():
     if request.method != 'POST':
@@ -126,7 +128,7 @@ def send_item():
             db.session.commit()
             return jsonify({'link': link._text})
 
-@app.route('/get', methods=['GET'])
+@routes.route('/get', methods=['GET'])
 @jwt_required()
 def receive_item():
     if request.method != 'GET':
