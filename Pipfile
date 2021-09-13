@@ -9,6 +9,8 @@ flask-sqlalchemy = "*"
 python-dotenv = "*"
 flask-migrate = "*"
 flask-jwt-extended = "*"
+pytest = "*"
+pytest-cov = "*"
 
 [dev-packages]
 
