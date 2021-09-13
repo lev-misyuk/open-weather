@@ -12,13 +12,13 @@ def register():
     try:
         assert 'login' in request.args and 'password' in request.args
     except AssertionError:
-        return jsonify({'message': 'Both of login and password must be provided'}), 422
+        return jsonify({'message': 'Both of login and password must be provided'}), 400
     else:
         login, password = request.args.get('login'), request.args.get('password')
         try:
             assert len(login) > 0 and len(password) > 0
         except AssertionError:
-            return jsonify({'message': 'Invalid login or password'}), 422
+            return jsonify({'message': 'Invalid login or password'}), 400
         else:
             try: 
                 assert login not in (u.login for u in User.query.all())
@@ -37,13 +37,13 @@ def login():
     try:
         assert 'login' in request.args and 'password' in request.args
     except AssertionError:
-        return jsonify({'message': 'Both of login and password must be provided'}), 422
+        return jsonify({'message': 'Both of login and password must be provided'}), 400
     else:
         login, password = request.args.get('login'), request.args.get('password')
         try:
             assert len(login) > 0 and len(password) > 0
         except AssertionError:
-            return jsonify({'message': 'Invalid login or password'}), 422
+            return jsonify({'message': 'Invalid login or password'}), 400
         else:
             user = User.query.filter_by(login=login, password=password).first()
             if user:
@@ -61,13 +61,13 @@ def create_item():
     try:
         assert 'name' in request.args
     except AssertionError:
-        return jsonify({'message': 'Name must be provided'}), 422
+        return jsonify({'message': 'Name must be provided'}), 400
     else:
         name = request.args.get('name')
         try:
             assert len(name) > 0
         except AssertionError:
-            return jsonify({'message': 'Invalid item name'})
+            return jsonify({'message': 'Invalid item name'}), 400
         else:
             item = Item(name=name, owner_login=current_user)
             db.session.add(item)
@@ -87,7 +87,7 @@ def delete_item(id):
         db.session.delete(item)
         db.session.commit()
         return jsonify({'message': f'Item with id {id} has been deleted'})
-    return jsonify({'message': 'Item not found'}), 404
+    return jsonify({'message': 'Item not found or you are not an owner of this item'}), 422
 
 @routes.route('/items', methods=['GET'])
 @jwt_required()
@@ -107,12 +107,12 @@ def send_item():
     try:
         assert 'id' in request.args and len(request.args.get('id')) > 0
     except AssertionError:
-        return jsonify({'message': 'Invalid item id'}), 422
+        return jsonify({'message': 'Invalid item id'}), 400
     else:
         try:
             assert 'login' in request.args and len(request.args.get('login')) > 0
         except AssertionError:
-            return jsonify({'message': 'Invalid login'}), 422
+            return jsonify({'message': 'Invalid login'}), 400
         else:
             receiver_login, id = request.args.get('login'), request.args.get('id')
             receiver = User.query.filter_by(login=receiver_login).first()
@@ -137,7 +137,7 @@ def receive_item():
     try:
         assert 'link' in request.args and len(request.args.get('link')) > 0
     except AssertionError:
-        return jsonify({'message': 'Invalid link'}), 422
+        return jsonify({'message': 'Invalid link'}), 400
     else:
         link = request.args.get('link').split('/')
         if link[0] != current_user:
